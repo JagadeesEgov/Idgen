@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
-	"github.com/yourorg/idgen/internal"
+	"idgen/internal"
 )
 
 func main() {
@@ -23,7 +23,7 @@ func main() {
 		log.Fatal("POSTGRES_DSN not set in environment")
 	}
 
-	// TODO: Initialize DB connection and pass to handlers
+	//Initialize DB connection here and pass the handlers    
 	db, err := internal.InitDB(dsn)
 	if err != nil {
 		log.Fatalf("DB init failed: %v", err)

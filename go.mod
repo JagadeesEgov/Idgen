@@ -1,4 +1,4 @@
-  module github.com/yourorg/idgen
+module idgen
 
 go 1.24.4
 

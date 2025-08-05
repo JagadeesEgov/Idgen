@@ -3,6 +3,7 @@ package internal
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -15,7 +16,7 @@ type RegisterTemplateRequest struct {
 	Config     json.RawMessage `json:"config" binding:"required"`
 }
 
-// GenerateIdRequest is the request body for /generate
+// GenerateIdRequest is the request body for generating an ID
 type GenerateIdRequest struct {
 	TemplateID string            `json:"templateId" binding:"required"`
 	Variables  map[string]string `json:"variables"`
@@ -83,6 +84,18 @@ func GenerateIdHandler(db *sql.DB) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
+		// Store the generated ID for audit/traceability
+		variablesJSON, _ := json.Marshal(req.Variables)
+		_, err = db.Exec(
+			`INSERT INTO idgen_generated (template_id, generated_id, variables, created_at) VALUES ($1, $2, $3, $4)`,
+			req.TemplateID, id, variablesJSON, time.Now().Unix(),
+		)
+		if err != nil {
+			// Log the error but don't fail the request
+			log.Printf("Failed to store generated ID: %v", err)
+		}
+
 		c.JSON(http.StatusOK, GenerateIdResponse{ID: id})
 	}
 } 

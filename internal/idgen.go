@@ -107,7 +107,7 @@ func getNextSequence(db *sql.DB, templateId string, date string, seqCfg *Sequenc
 	return next, nil
 }
 
-// Pad sequence number
+// Pad sequence number   
 func padSeq(n int64, padLen int, padChar string) string {
 	s := fmt.Sprintf("%d", n)
 	if len(s) >= padLen {
