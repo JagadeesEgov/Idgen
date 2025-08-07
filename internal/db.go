@@ -3,6 +3,10 @@ package internal
 import (
 	"database/sql"
 	"fmt"
+	"log"
+	"time"
+
+	"idgen/internal/migrations"
 
 	_ "github.com/lib/pq"
 )
@@ -12,38 +16,20 @@ func InitDB(dsn string) (*sql.DB, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to open db: %w", err)
 	}
-	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping db: %w", err)
-	}
+	// Retry ping for up to 10 seconds
+for i := 0; i < 10; i++ {
+    if err := db.Ping(); err == nil {
+        break
+    }
+    log.Println("Waiting for DB to be ready...")
+    time.Sleep(1 * time.Second)
+}
 
-	// Ensure idgen_templates table exists
-	tableSQL := `
-	CREATE TABLE IF NOT EXISTS idgen_templates (
-		id          VARCHAR(64) PRIMARY KEY,
-		config      JSONB NOT NULL,
-		created_at  BIGINT,
-		created_by  VARCHAR(64)
-	);
-	`
-	_, err = db.Exec(tableSQL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create idgen_templates table: %w", err)
-	}
 
-	// Ensure idgen_generated table exists
-	generatedTableSQL := `
-	CREATE TABLE IF NOT EXISTS idgen_generated (
-		id           SERIAL PRIMARY KEY,
-		template_id  VARCHAR(64) NOT NULL,
-		generated_id VARCHAR(128) NOT NULL,
-		variables    JSONB,
-		created_at   BIGINT
-	);
-	`
-	_, err = db.Exec(generatedTableSQL)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create idgen_generated table: %w", err)
+	// Run database migrations
+	if err := migrations.RunMigrations(db); err != nil {
+		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
 	return db, nil
-} 
+}

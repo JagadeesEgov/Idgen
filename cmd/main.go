@@ -22,7 +22,7 @@ func main() {
 	if dsn == "" {
 		log.Fatal("POSTGRES_DSN not set in environment")
 	}
-
+    log.Printf("connecting");
 	//Initialize DB connection here and pass the handlers    
 	db, err := internal.InitDB(dsn)
 	if err != nil {
